@@ -21,7 +21,7 @@ def run_generating_tests():
         # tracemalloc.start()
         for file in type_files:
             start = time.time()
-            os.system("owl -c /home/luctia/PycharmProjects/OwlPerfTest/tests/" + file + " -o /dev/null")
+            os.system("owl -c " + os.getcwd() + "/tests/" + file + " -o /dev/null")
             end = time.time()
             # mem_info = tracemalloc.get_traced_memory()
             results[int(re.compile("(\d+)").search(file).groups(0)[0])] = {
