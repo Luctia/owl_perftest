@@ -37,7 +37,7 @@ def run_generating_tests():
         for i, file in enumerate(type_files):
             progress_bar(i + 1, len(type_files))
             start = time.time()
-            call("owl -c " + os.getcwd() + "/tests/" + file + " -o /dev/null", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            call("owl -c " + os.getcwd() + "/tests/" + file + " -o " + os.getcwd() + "/parsers/" + file[:-3] + "h", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
             # os.system("owl -c /home/luctia/PycharmProjects/OwlPerfTest/tests/" + file + " -o /dev/null")
             end = time.time()
             # mem_info = tracemalloc.get_traced_memory()
@@ -92,9 +92,15 @@ def generate_graphs():
     print("\nDone")
 
 
+def add_line_counts():
+    print("Couting lines...")
+
+
 if __name__ == '__main__':
     if not os.path.isdir(os.getcwd() + "/tests/"):
         os.mkdir("tests")
-    generate_grammars(50, step_size=20)
+    if not os.path.isdir(os.getcwd() + "/parsers/"):
+        os.mkdir("parsers")
+    generate_grammars(5, step_size=20)
     run_generating_tests()
     generate_graphs()
