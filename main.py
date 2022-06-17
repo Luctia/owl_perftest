@@ -37,7 +37,7 @@ def run_generating_tests():
         for i, file in enumerate(type_files):
             progress_bar(i + 1, len(type_files))
             start = time.time()
-            call("owl -c /home/luctia/PycharmProjects/OwlPerfTest/tests/" + file + " -o /dev/null", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+            call("owl -c " + os.getcwd() + "/tests/" + file + " -o /dev/null", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
             # os.system("owl -c /home/luctia/PycharmProjects/OwlPerfTest/tests/" + file + " -o /dev/null")
             end = time.time()
             # mem_info = tracemalloc.get_traced_memory()
