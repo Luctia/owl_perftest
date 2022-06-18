@@ -10,7 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-TYPES = ["long", "deep", "stacked", "declaration", "mixed"]
+TYPES = ["long"]
+# TYPES = ["long", "deep", "stacked", "declaration", "mixed"]
 
 
 def progress_bar(progress, total):
@@ -21,16 +22,18 @@ def progress_bar(progress, total):
 
 def generate_grammars(N, step_size=50):
     print("Generating grammars...")
-    progress_bar(0, N)
-    for i in range(N):
-        progress_bar(i + 1, N)
-        grammar_generator.deep(step_size*i, "tests/deep_" + str(step_size*i) + ".owl")
+    progress_bar(0, N * len(TYPES))
+    for i, type in enumerate(TYPES):
+        generator = getattr(grammar_generator, type)
+        for j in range(N):
+            generator(step_size*j + 1, "tests/" + type + "_" + str(step_size*j) + ".owl")
+            progress_bar(j + 1 + N * i, N * len(TYPES))
     print("\nDone.")
 
 
 def run_generating_tests():
     files = os.listdir("tests")
-    for type in ["deep"]:
+    for type in TYPES:
         print("Running generating tests for " + type + " grammars...")
         results = dict()
         type_files = [file for file in files if file.__contains__(type)]
@@ -101,7 +104,9 @@ def generate_graphs():
 def add_line_counts():
     print("Couting lines...")
     files = os.listdir(os.getcwd() + "/parsers/")
-    for type in ["deep"]:
+    progress_bar(0, len(files))
+    processed = 0
+    for type in TYPES:
         type_files = [file for file in files if file.__contains__(type)]
         current_data = json.load(open(os.getcwd() + "/" + type + "_results.json"))
         for file in type_files:
@@ -111,8 +116,11 @@ def add_line_counts():
                 lines = len(re.findall(r"\n[^/\n]", content))
                 parser.close()
             current_data[file.split('_')[1][:-2]]['lines'] = lines
+            processed += 1
+            progress_bar(processed, len(files))
         json.dump({int(entry): current_data[entry] for entry in current_data.keys()}, open(os.getcwd() + "/" + type + "_results.json", "w"), sort_keys=True, indent=4)
-    print("Done.")
+    progress_bar(1, 1)
+    print("\nDone.")
 
 
 if __name__ == '__main__':
@@ -120,7 +128,7 @@ if __name__ == '__main__':
         os.mkdir("tests")
     if not os.path.isdir(os.getcwd() + "/parsers/"):
         os.mkdir("parsers")
-    generate_grammars(200, step_size=10)
+    generate_grammars(500, step_size=5)
     run_generating_tests()
     add_line_counts()
     generate_graphs()
