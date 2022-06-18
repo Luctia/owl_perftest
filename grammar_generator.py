@@ -4,7 +4,11 @@ TERMINALS = ["number", "identifier", "integer", "string"]
 
 
 def get_random_terminal():
-    return random.choice(TERMINALS)
+    terminals = list(dict.fromkeys(random.choices(TERMINALS, k=random.randint(1, len(TERMINALS)))))
+    output = terminals[0]
+    for terminal in terminals[1:]:
+        output += " | " + terminal
+    return output
 
 
 def long(N, filename):
@@ -20,6 +24,16 @@ def deep(N, filename):
         grammar.write("a" + str(i) + " = a" + str(i + 1) + "\n")
     grammar.write("a" + str(N) + " = " + get_random_terminal())
     grammar.close()
+
+
+def recursion(N, filename):
+    pass
+    # grammar = open(filename, "w")
+    # token_pairs = [["{", "}"], ["(", ")"], ["[", "]"]]
+    # First, we write a terminal that could be anything.
+    # for i in range(N):
+    #
+    # grammar.close()
 
 
 def stacked(N, filename):
