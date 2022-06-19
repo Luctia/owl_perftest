@@ -11,8 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-TYPES = ["deep", "long"]
-# TYPES = ["long", "deep", "stacked", "declaration", "mixed"]
+TYPES = ["recursion", "long", "deep"]
 
 
 def progress_bar(progress, total):
@@ -62,32 +61,23 @@ def run_generating_tests():
         print("\nDone.")
 
 
-def generate_graph_linear(data, grammar_type):
+def generate_linear_graph(data, grammar_type):
     x = np.linspace(0, int(max([int(key) for key in data.keys()])), int(len(data)))
     time_to_generate = [info['time'] for info in data.values()]
     lines = [info['lines'] for info in data.values()]
 
-    # fit a linear curve an estimate its y-values and their error.
-    # a, b = np.polyfit(x, y, deg=1)
-    # y_est = a * x + b
-    # y_err = x.std() * np.sqrt(1 / len(x) +
-    #                           (x - x.mean()) ** 2 / np.sum((x - x.mean()) ** 2))
-    #
-    # fig, ax = plt.subplots()
-    # ax.plot(x, y_est, '-')
-    # ax.fill_between(x, y_est - y_err, y_est + y_err, alpha=0.2)
-    # ax.plot(x, y, 'o', color='tab:brown')
-
     fig, ax1 = plt.subplots()
     ax1.plot(x, time_to_generate)
 
-    ax1.set(xlabel='length of grammar', ylabel='time (s)',
-           title='Time to generate a parser for a ' + grammar_type + ' grammar of a certain length')
+    ax1.set(xlabel='length of grammar', ylabel='time (s)')
     ax1.grid()
 
     ax2 = ax1.twinx()
     ax2.plot(x, lines, color='r')
-    # ax2.setylabel("# of lines")
+    ax2.set_ylabel("# of lines")
+    ax2.tick_params(axis='y', labelcolor='r')
+
+    fig.tight_layout()
 
     plt.savefig(grammar_type + '.png')
     plt.clf()
@@ -102,17 +92,19 @@ def generate_polynomial_graph(data, grammar_type):
     fit = np.polyfit(x, np.log(time_to_generate), 1)
     a = np.exp(fit[1])
     b = fit[0]
-    x_fitted = np.linspace(np.min(x), np.max(x), 100)
+    x_fitted = np.linspace(np.min(x), np.max(x), len(lines))
     ttg_fitted = a * np.exp(b * x_fitted)
     ax1.plot(x_fitted, ttg_fitted)
     ax1.scatter(x_fitted, ttg_fitted, c=[], edgecolors='#cccccc', s=50, cmap='Dark2')
-    # DO SOMETHING
-    ax1.set(xlabel='length of grammar', ylabel='time (s)',
-           title='Time to generate a parser for a ' + grammar_type + ' grammar of a certain length')
+    ax1.set(xlabel='length of grammar', ylabel='time (s)')
+    ax1.grid()
 
     ax2 = ax1.twinx()
     ax2.plot(x_fitted, lines, color='r')
-    # ax2.setylabel("# of lines")
+    ax2.set_ylabel("# of lines")
+    ax2.tick_params(axis='y', labelcolor='r')
+
+    fig.tight_layout()
 
     plt.savefig(grammar_type + '.png')
     plt.clf()
@@ -125,11 +117,11 @@ def generate_graphs():
     progress_bar(0, len(result_files))
     for i, file in enumerate(result_files):
         grammar_type = file.split('_')[0]
-        if grammar_type == "deep":
+        if grammar_type == "deep" or grammar_type == "recursion":
             # We noticed that for this grammar, Owl takes exponential time to generate parsers.
             generate_polynomial_graph(json.load(open(file)), grammar_type)
         else:
-            generate_graph_linear(json.load(open(file)), grammar_type)
+            generate_linear_graph(json.load(open(file)), grammar_type)
         progress_bar(i + 1, len(result_files))
     print("\nDone")
 
@@ -157,15 +149,14 @@ def add_line_counts():
 
 
 if __name__ == '__main__':
-    # if not os.path.isdir(os.getcwd() + "/tests/"):
-    #     os.mkdir("tests")
-    # if not os.path.isdir(os.getcwd() + "/parsers/"):
-    #     os.mkdir("parsers")
-    # generate_grammars(50, step_size=10)
-    # run_generating_tests()
-    # add_line_counts()
+    if not os.path.isdir(os.getcwd() + "/tests/"):
+        os.mkdir("tests")
+    if not os.path.isdir(os.getcwd() + "/parsers/"):
+        os.mkdir("parsers")
+    generate_grammars(80, step_size=1)
+    run_generating_tests()
+    add_line_counts()
     generate_graphs()
-    # If we're just debugging, we remove all the parsers and tests after running.
-    if True:
-        shutil.rmtree('parsers', ignore_errors=True)
-        shutil.rmtree('tests', ignore_errors=True)
+    # If we're not interested in the output of Owl, we remove all the parsers and tests after running.
+    shutil.rmtree('parsers', ignore_errors=True)
+    shutil.rmtree('tests', ignore_errors=True)

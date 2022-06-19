@@ -27,13 +27,17 @@ def deep(N, filename):
 
 
 def recursion(N, filename):
-    pass
-    # grammar = open(filename, "w")
-    # token_pairs = [["{", "}"], ["(", ")"], ["[", "]"]]
+    grammar = open(filename, "w")
+    token_pairs = [["{", "}"], ["(", ")"], ["[", "]"]]
     # First, we write a terminal that could be anything.
-    # for i in range(N):
-    #
-    # grammar.close()
+    grammar.write("recurse0 = " + get_random_terminal() + "\n")
+    for i in range(N):
+        token_pair = random.choice(token_pairs)
+        grammar.write("recurse" + str(i + 1) + " = [ '" + token_pair[0] + "' recurse" + str(i) + " '" + token_pair[1] + "' ]\n")
+    grammar.close()
+    # At large N:
+    # free(): invalid next size (fast)
+    # Aborted (core dumped)
 
 
 def stacked(N, filename):
