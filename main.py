@@ -4,12 +4,12 @@ import re
 import shutil
 import subprocess
 import time
-# import tracemalloc
 from subprocess import call
+from threading import Thread
 import grammar_generator
 import numpy as np
 import matplotlib.pyplot as plt
-
+from progress_bar import ProgressBar
 
 TYPES = ["conditionals", "deep", "long", "recursion"]
 
@@ -35,30 +35,29 @@ def run_generating_tests():
     files = os.listdir("tests")
     for type in TYPES:
         print("Running generating tests for " + type + " grammars...")
-        results = dict()
         type_files = [file for file in files if file.__contains__(type)]
-        # tracemalloc.start()
-        progress_bar(0, len(type_files))
+        bar = ProgressBar(len(type_files))
+        thread_pool = [None] * len(type_files)
+        results = dict()
         for i, file in enumerate(type_files):
-            progress_bar(i + 1, len(type_files))
-            start = time.time()
-            call("owl -c " + os.getcwd() + "/tests/" + file + " -o " + os.getcwd() + "/parsers/" + file[:-3] + "h", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-            # os.system("owl -c /home/luctia/PycharmProjects/OwlPerfTest/tests/" + file + " -o /dev/null")
-            end = time.time()
-            # mem_info = tracemalloc.get_traced_memory()
-            results[int(re.compile("(\d+)").search(file).groups(0)[0])] = {
-                "time": (end - start),
-                # "memUsage": {
-                #     "size": mem_info[0],
-                #     "peak": mem_info[1]
-                # }
-            }
-            # tracemalloc.clear_traces()
-            # tracemalloc.reset_peak()
-        # tracemalloc.stop()
+            thread_pool[i] = Thread(target=parse_threaded, args=[file, results, bar])
+            thread_pool[i].start()
+        for i in range(len(type_files)):
+            thread_pool[i].join()
         with open(os.getcwd() + "/" + type + "_results.json", "w") as res_file:
             json.dump(results, res_file, sort_keys=True, indent=4)
+        bar.finish()
         print("\nDone.")
+
+
+def parse_threaded(file, results, bar):
+    start = time.time()
+    call("owl -c " + os.getcwd() + "/tests/" + file + " -o " + os.getcwd() + "/parsers/" + file[:-3] + "h", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+    end = time.time()
+    results[int(re.compile("(\d+)").search(file).groups(0)[0])] = {
+                "time": (end - start)
+            }
+    bar.done_with_step()
 
 
 def generate_linear_graph(data, grammar_type):
@@ -114,7 +113,7 @@ def generate_graphs():
     print("Generating graphs...")
     files = os.listdir(".")
     result_files = [file for file in files if file.__contains__("_results.json")]
-    progress_bar(0, len(result_files))
+    progress_bar(0, len(result_files) + 2)
     for i, file in enumerate(result_files):
         grammar_type = file.split('_')[0]
         if grammar_type == "deep" or grammar_type == "recursion":
@@ -122,7 +121,8 @@ def generate_graphs():
             generate_polynomial_graph(json.load(open(file)), grammar_type)
         else:
             generate_linear_graph(json.load(open(file)), grammar_type)
-        progress_bar(i + 1, len(result_files))
+        progress_bar(i + 1, len(result_files) + 2)
+    progress_bar(1, 1)
     print("\nDone")
 
 
@@ -153,7 +153,7 @@ if __name__ == '__main__':
         os.mkdir("tests")
     if not os.path.isdir(os.getcwd() + "/parsers/"):
         os.mkdir("parsers")
-    generate_grammars(80, step_size=1)
+    generate_grammars(200, step_size=5)
     run_generating_tests()
     add_line_counts()
     generate_graphs()
