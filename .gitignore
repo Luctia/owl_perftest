@@ -1,3 +1,4 @@
 tests/
 parsers/
 *_results.json
+*.png

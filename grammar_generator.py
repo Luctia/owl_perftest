@@ -40,6 +40,21 @@ def recursion(N, filename):
     # Aborted (core dumped)
 
 
+def conditionals(N, filename):
+    grammar = open(filename, "w")
+    output = get_random_terminal()
+    terminals = ""
+    # N = 331 is most we could get until Owl indicated that we were too deeply nested.
+    if N > 331:
+        N = 331
+    for i in range(N):
+        terminals += "terminal" + str(i * 2) + " = " + get_random_terminal() + "\n"
+        terminals += "terminal" + str(i * 2 + 1) + " = " + get_random_terminal() + "\n"
+        output = "(terminal" + str(i * 2) + " " + output + ")? terminal" + str(i * 2 + 1)
+    grammar.write("if = " + output + "\n" + terminals)
+    grammar.close()
+
+
 def stacked(N, filename):
     pass
 

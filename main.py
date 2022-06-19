@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-TYPES = ["recursion", "long", "deep"]
+TYPES = ["conditionals", "deep", "long", "recursion"]
 
 
 def progress_bar(progress, total):
