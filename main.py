@@ -42,8 +42,9 @@ def run_generating_tests():
         for i, file in enumerate(type_files):
             thread_pool[i] = Thread(target=parse_threaded, args=[file, results, bar])
             thread_pool[i].start()
-        for i in range(len(type_files)):
             thread_pool[i].join()
+        # for i in range(len(type_files)):
+        #     thread_pool[i].join()
         with open(os.getcwd() + "/" + type + "_results.json", "w") as res_file:
             json.dump(results, res_file, sort_keys=True, indent=4)
         bar.finish()
@@ -145,14 +146,14 @@ def generate_graphs():
     files = os.listdir(".")
     result_files = [file for file in files if file.__contains__("_results.json")]
     progress_bar(0, len(result_files) + 2)
-    # for i, file in enumerate(result_files):
-    #     grammar_type = file.split('_')[0]
-    #     if grammar_type == "deep" or grammar_type == "recursion":
-    #         # We noticed that for this grammar, Owl takes exponential time to generate parsers.
-    #         generate_polynomial_graph(json.load(open(file)), grammar_type)
-    #     else:
-    #         generate_linear_graph(json.load(open(file)), grammar_type)
-    #     progress_bar(i + 1, len(result_files) + 2)
+    for i, file in enumerate(result_files):
+        grammar_type = file.split('_')[0]
+        if grammar_type == "deep" or grammar_type == "recursion":
+            # We noticed that for this grammar, Owl takes exponential time to generate parsers.
+            generate_polynomial_graph(json.load(open(file)), grammar_type)
+        else:
+            generate_linear_graph(json.load(open(file)), grammar_type)
+        progress_bar(i + 1, len(result_files) + 2)
     generate_comparative_graphs(result_files)
     progress_bar(1, 1)
     print("\nDone")
@@ -185,7 +186,7 @@ if __name__ == '__main__':
         os.mkdir("tests")
     if not os.path.isdir(os.getcwd() + "/parsers/"):
         os.mkdir("parsers")
-    generate_grammars(200, step_size=5)
+    generate_grammars(250, step_size=40)
     run_generating_tests()
     add_line_counts()
     generate_graphs()
