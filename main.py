@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 from progress_bar import ProgressBar
 
 
-TOTAL_MEMORY_GB = 10
-TOTAL_WORKER_COUNT = 4
+TOTAL_MEMORY_GB = 50
+TOTAL_WORKER_COUNT = 6
 TYPES = ["deep", "long", "recursion", "conditionals"]
 
 
@@ -223,10 +223,10 @@ if __name__ == '__main__':
         os.mkdir("tests")
     if not os.path.isdir(os.getcwd() + "/parsers/"):
         os.mkdir("parsers")
-    generate_grammars(50, step_size=10)
+    generate_grammars(1000, step_size=10)
     run_generating_tests()
     add_line_counts()
     generate_graphs()
     # If we're not interested in the output of Owl, we remove all the parsers and tests after running.
-    shutil.rmtree('parsers', ignore_errors=True)
-    shutil.rmtree('tests', ignore_errors=True)
+    # shutil.rmtree('parsers', ignore_errors=True)
+    # shutil.rmtree('tests', ignore_errors=True)
