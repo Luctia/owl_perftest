@@ -1,9 +1,11 @@
 import json
 import os
 import re
+import resource
 import shutil
 import subprocess
 import time
+from queue import Queue
 from subprocess import call
 from threading import Thread
 import grammar_generator
@@ -11,7 +13,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from progress_bar import ProgressBar
 
-TYPES = ["conditionals", "deep", "long", "recursion"]
+
+TOTAL_MEMORY_GB = 10
+TOTAL_WORKER_COUNT = 4
+TYPES = ["deep", "long", "recursion", "conditionals"]
 
 
 def progress_bar(progress, total):
@@ -39,26 +44,47 @@ def run_generating_tests():
         bar = ProgressBar(len(type_files))
         thread_pool = [None] * len(type_files)
         results = dict()
+        jobs = Queue()
         for i, file in enumerate(type_files):
-            thread_pool[i] = Thread(target=parse_threaded, args=[file, results, bar])
-            thread_pool[i].start()
-            thread_pool[i].join()
+            jobs.put(file)
+            # thread_pool[i] = Thread(target=parse_threaded, args=[file, results, bar])
+            # thread_pool[i].start()
+            # thread_pool[i].join()
+        for _ in range(TOTAL_WORKER_COUNT):
+            thread = Thread(target=worker, args=[results, bar, jobs])
+            thread.setDaemon(True)
+            thread.start()
         # for i in range(len(type_files)):
         #     thread_pool[i].join()
+        jobs.join()
         with open(os.getcwd() + "/" + type + "_results.json", "w") as res_file:
             json.dump(results, res_file, sort_keys=True, indent=4)
         bar.finish()
         print("\nDone.")
 
 
-def parse_threaded(file, results, bar):
-    start = time.time()
-    call("owl -c " + os.getcwd() + "/tests/" + file + " -o " + os.getcwd() + "/parsers/" + file[:-3] + "h", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    end = time.time()
-    results[int(re.compile("(\d+)").search(file).groups(0)[0])] = {
-                "time": (end - start)
-            }
-    bar.done_with_step()
+def worker(results, bar, jobs):
+    resource.setrlimit(resource.RLIMIT_AS, (int((TOTAL_MEMORY_GB * 1000000000) / TOTAL_WORKER_COUNT), int((TOTAL_MEMORY_GB * 1073741824 * 10) / TOTAL_WORKER_COUNT)))
+    while True:
+        file = jobs.get()
+        start = time.time()
+        call("owl -c " + os.getcwd() + "/tests/" + file + " -o " + os.getcwd() + "/parsers/" + file[:-3] + "h", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+        end = time.time()
+        results[int(re.compile("(\d+)").search(file).groups(0)[0])] = {
+                    "time": (end - start)
+                }
+        bar.done_with_step()
+        jobs.task_done()
+
+
+# def parse_threaded(file, results, bar):
+#     start = time.time()
+#     call("owl -c " + os.getcwd() + "/tests/" + file + " -o " + os.getcwd() + "/parsers/" + file[:-3] + "h", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+#     end = time.time()
+#     results[int(re.compile("(\d+)").search(file).groups(0)[0])] = {
+#                 "time": (end - start)
+#             }
+#     bar.done_with_step()
 
 
 def generate_linear_graph(data, grammar_type):
@@ -120,25 +146,36 @@ def generate_comparative_graphs(result_files_names):
     # TODO check if lenths are the same
     x = [int(key) for key in data[list(data.keys())[0]]]
     # One graph for line counts
-    fig, ax1 = plt.subplots()
+    fig, ax = plt.subplots()
     for type in data.keys():
         lines = [data[type][point]['lines'] for point in data[type]]
-        ax1.plot(x, lines, label=type)
-        ax1.legend()
+        ax.plot(x, lines, label=type)
+        ax.legend()
+    ax.set_ylabel("# of lines")
+    ax.set_xlabel("Size of grammar")
+    ax.grid()
     fig.tight_layout()
     plt.savefig("line_compare.png")
     plt.clf()
 
     # Now onto comparing the times
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    fig, ax = plt.subplots()
     for i, type in enumerate(data.keys()):
         times = [data[type][point]['time'] for point in data[type]]
-        fit = np.polyfit(x, np.log(times), 1)
-        a = np.exp(fit[1])
-        b = fit[0]
-        ttg_fitted = a * np.exp(b * x)
-        ax1.plot(x, ttg_fitted)
-        ax1.scatter()
+        # fit = np.polyfit(x, np.log(times), 1)
+        # a = np.exp(fit[1])
+        # b = fit[0]
+        # ttg_fitted = a * np.exp(b * x)
+        # ax.plot(x, ttg_fitted, label=type)
+        ax.scatter(x, times, c=[], edgecolor=colors[i], label=type)
+        ax.legend()
+    ax.set_ylabel("Time to generate (s)")
+    ax.set_xlabel("Size of grammar")
+    ax.grid()
+    fig.tight_layout()
+    plt.savefig("time_compare.png")
+    plt.clf()
 
 
 def generate_graphs():
@@ -186,7 +223,7 @@ if __name__ == '__main__':
         os.mkdir("tests")
     if not os.path.isdir(os.getcwd() + "/parsers/"):
         os.mkdir("parsers")
-    generate_grammars(250, step_size=40)
+    generate_grammars(50, step_size=10)
     run_generating_tests()
     add_line_counts()
     generate_graphs()
