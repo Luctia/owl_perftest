@@ -94,7 +94,7 @@ def generate_polynomial_graph(data, grammar_type):
     x_fitted = np.linspace(np.min(x), np.max(x), len(lines))
     ttg_fitted = a * np.exp(b * x_fitted)
     ax1.plot(x_fitted, ttg_fitted)
-    ax1.scatter(x_fitted, ttg_fitted, c=[], edgecolors='#cccccc', s=50, cmap='Dark2')
+    ax1.scatter(x_fitted, time_to_generate, c=[], edgecolors='#cccccc', s=50, cmap='Dark2')
     ax1.set(xlabel='length of grammar', ylabel='time (s)')
     ax1.grid()
 
@@ -109,19 +109,51 @@ def generate_polynomial_graph(data, grammar_type):
     plt.clf()
 
 
+def generate_comparative_graphs(result_files_names):
+    data = dict()
+    for file in result_files_names:
+        data[file.split('_')[0]] = json.load(open(file))
+    lengths = []
+    for type in data.keys():
+        lengths.append(len(data[type]))
+    # TODO check if lenths are the same
+    x = [int(key) for key in data[list(data.keys())[0]]]
+    # One graph for line counts
+    fig, ax1 = plt.subplots()
+    for type in data.keys():
+        lines = [data[type][point]['lines'] for point in data[type]]
+        ax1.plot(x, lines, label=type)
+        ax1.legend()
+    fig.tight_layout()
+    plt.savefig("line_compare.png")
+    plt.clf()
+
+    # Now onto comparing the times
+    colors = ['r', 'g', 'b', 'c', 'm', 'y']
+    for i, type in enumerate(data.keys()):
+        times = [data[type][point]['time'] for point in data[type]]
+        fit = np.polyfit(x, np.log(times), 1)
+        a = np.exp(fit[1])
+        b = fit[0]
+        ttg_fitted = a * np.exp(b * x)
+        ax1.plot(x, ttg_fitted)
+        ax1.scatter()
+
+
 def generate_graphs():
     print("Generating graphs...")
     files = os.listdir(".")
     result_files = [file for file in files if file.__contains__("_results.json")]
     progress_bar(0, len(result_files) + 2)
-    for i, file in enumerate(result_files):
-        grammar_type = file.split('_')[0]
-        if grammar_type == "deep" or grammar_type == "recursion":
-            # We noticed that for this grammar, Owl takes exponential time to generate parsers.
-            generate_polynomial_graph(json.load(open(file)), grammar_type)
-        else:
-            generate_linear_graph(json.load(open(file)), grammar_type)
-        progress_bar(i + 1, len(result_files) + 2)
+    # for i, file in enumerate(result_files):
+    #     grammar_type = file.split('_')[0]
+    #     if grammar_type == "deep" or grammar_type == "recursion":
+    #         # We noticed that for this grammar, Owl takes exponential time to generate parsers.
+    #         generate_polynomial_graph(json.load(open(file)), grammar_type)
+    #     else:
+    #         generate_linear_graph(json.load(open(file)), grammar_type)
+    #     progress_bar(i + 1, len(result_files) + 2)
+    generate_comparative_graphs(result_files)
     progress_bar(1, 1)
     print("\nDone")
 
