@@ -53,15 +53,3 @@ def conditionals(N, filename):
         output = "(terminal" + str(i * 2) + " " + output + ")? terminal" + str(i * 2 + 1)
     grammar.write("if = " + output + "\n" + terminals)
     grammar.close()
-
-
-def stacked(N, filename):
-    pass
-
-
-def declaration(N, filename):
-    pass
-
-
-def mixed(N, filename):
-    pass
