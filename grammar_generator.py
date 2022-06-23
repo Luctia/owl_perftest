@@ -30,10 +30,11 @@ def recursion(N, filename):
     grammar = open(filename, "w")
     token_pairs = [["{", "}"], ["(", ")"], ["[", "]"]]
     # First, we write a terminal that could be anything.
-    grammar.write("recurse0 = " + get_random_terminal() + "\n")
+    res = "recurse0 = " + get_random_terminal() + "\n"
     for i in range(N):
         token_pair = random.choice(token_pairs)
-        grammar.write("recurse" + str(i + 1) + " = [ '" + token_pair[0] + "' recurse" + str(i) + " '" + token_pair[1] + "' ]\n")
+        res = "recurse" + str(i + 1) + " = [ '" + token_pair[0] + "' recurse" + str(i) + " '" + token_pair[1] + "' ]\n" + res
+    grammar.write(res)
     grammar.close()
     # At large N:
     # free(): invalid next size (fast)
