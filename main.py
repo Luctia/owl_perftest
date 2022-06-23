@@ -17,6 +17,9 @@ from progress_bar import ProgressBar
 TOTAL_MEMORY_GB = 50
 TOTAL_WORKER_COUNT = 6
 TYPES = ["deep", "many", "recursion", "conditionals"]
+TEST_COUNT = 1000
+STEP_SIZE = 10
+REMOVE_AFTERWARDS = False
 
 
 def progress_bar(progress, total):
@@ -223,10 +226,11 @@ if __name__ == '__main__':
         os.mkdir("tests")
     if not os.path.isdir(os.getcwd() + "/parsers/"):
         os.mkdir("parsers")
-    generate_grammars(1000, step_size=10)
+    generate_grammars(TEST_COUNT, step_size=STEP_SIZE)
     run_generating_tests()
     add_line_counts()
     generate_graphs()
     # If we're not interested in the output of Owl, we remove all the parsers and tests after running.
-    # shutil.rmtree('parsers', ignore_errors=True)
-    # shutil.rmtree('tests', ignore_errors=True)
+    if REMOVE_AFTERWARDS:
+        shutil.rmtree('parsers', ignore_errors=True)
+        shutil.rmtree('tests', ignore_errors=True)
