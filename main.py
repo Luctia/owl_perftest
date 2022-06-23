@@ -16,7 +16,7 @@ from progress_bar import ProgressBar
 
 TOTAL_MEMORY_GB = 50
 TOTAL_WORKER_COUNT = 6
-TYPES = ["deep", "long", "recursion", "conditionals"]
+TYPES = ["deep", "many", "recursion", "conditionals"]
 
 
 def progress_bar(progress, total):
