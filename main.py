@@ -16,7 +16,7 @@ from progress_bar import ProgressBar
 
 TOTAL_MEMORY_GB = 50
 TOTAL_WORKER_COUNT = 6
-TYPES = ["deep", "many", "recursion", "conditionals"]
+TYPES = ["deep", "many", "recursion", "optionals"]
 TEST_COUNT = 1000
 STEP_SIZE = 10
 REMOVE_AFTERWARDS = False
@@ -28,14 +28,14 @@ def progress_bar(progress, total):
     print(f"\r|{bar}| {percent:.2f}%", end="\r")
 
 
-def generate_grammars(N, step_size=50):
+def generate_grammars():
     print("Generating grammars...")
-    progress_bar(0, N * len(TYPES))
+    progress_bar(0, TEST_COUNT * len(TYPES))
     for i, type in enumerate(TYPES):
         generator = getattr(grammar_generator, type)
-        for j in range(N):
-            generator(step_size*j + 1, "tests/" + type + "_" + str(step_size*j) + ".owl")
-            progress_bar(j + 1 + N * i, N * len(TYPES))
+        for j in range(TEST_COUNT):
+            generator(STEP_SIZE*j + 1, "tests/" + type + "_" + str(STEP_SIZE*j) + ".owl")
+            progress_bar(j + 1 + TEST_COUNT * i, TEST_COUNT * len(TYPES))
     print("\nDone.")
 
 
@@ -50,15 +50,10 @@ def run_generating_tests():
         jobs = Queue()
         for i, file in enumerate(type_files):
             jobs.put(file)
-            # thread_pool[i] = Thread(target=parse_threaded, args=[file, results, bar])
-            # thread_pool[i].start()
-            # thread_pool[i].join()
         for _ in range(TOTAL_WORKER_COUNT):
             thread = Thread(target=worker, args=[results, bar, jobs])
             thread.setDaemon(True)
             thread.start()
-        # for i in range(len(type_files)):
-        #     thread_pool[i].join()
         jobs.join()
         with open(os.getcwd() + "/" + type + "_results.json", "w") as res_file:
             json.dump(results, res_file, sort_keys=True, indent=4)
@@ -80,29 +75,19 @@ def worker(results, bar, jobs):
         jobs.task_done()
 
 
-# def parse_threaded(file, results, bar):
-#     start = time.time()
-#     call("owl -c " + os.getcwd() + "/tests/" + file + " -o " + os.getcwd() + "/parsers/" + file[:-3] + "h", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-#     end = time.time()
-#     results[int(re.compile("(\d+)").search(file).groups(0)[0])] = {
-#                 "time": (end - start)
-#             }
-#     bar.done_with_step()
-
-
 def generate_linear_graph(data, grammar_type):
     x = np.linspace(0, int(max([int(key) for key in data.keys()])), int(len(data)))
     time_to_generate = [info['time'] for info in data.values()]
     lines = [info['lines'] for info in data.values()]
 
     fig, ax1 = plt.subplots()
-    ax1.plot(x, time_to_generate)
+    ax1.plot(x, time_to_generate, label="Time")
 
     ax1.set(xlabel='length of grammar', ylabel='time (s)')
     ax1.grid()
 
     ax2 = ax1.twinx()
-    ax2.plot(x, lines, color='r')
+    ax2.plot(x, lines, color='r', label="# of lines")
     ax2.set_ylabel("# of lines")
     ax2.tick_params(axis='y', labelcolor='r')
 
@@ -127,11 +112,13 @@ def generate_polynomial_graph(data, grammar_type):
     ax1.scatter(x_fitted, time_to_generate, c=[], edgecolors='#cccccc', s=50, cmap='Dark2')
     ax1.set(xlabel='length of grammar', ylabel='time (s)')
     ax1.grid()
+    ax1.legend()
 
     ax2 = ax1.twinx()
     ax2.plot(x_fitted, lines, color='r')
     ax2.set_ylabel("# of lines")
     ax2.tick_params(axis='y', labelcolor='r')
+    ax2.legend()
 
     fig.tight_layout()
 
@@ -150,9 +137,10 @@ def generate_comparative_graphs(result_files_names):
     x = [int(key) for key in data[list(data.keys())[0]]]
     # One graph for line counts
     fig, ax = plt.subplots()
+    fig.set_size_inches(10, 5, forward=True)
     for type in data.keys():
         lines = [data[type][point]['lines'] for point in data[type]]
-        ax.plot(x, lines, label=type)
+        ax.plot([int(key) for key in data[type]], lines, label=type)
         ax.legend()
     ax.set_ylabel("# of lines")
     ax.set_xlabel("Size of grammar")
@@ -164,20 +152,16 @@ def generate_comparative_graphs(result_files_names):
     # Now onto comparing the times
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
     fig, ax = plt.subplots()
+    fig.set_size_inches(10, 5, forward=True)
     for i, type in enumerate(data.keys()):
         times = [data[type][point]['time'] for point in data[type]]
-        # fit = np.polyfit(x, np.log(times), 1)
-        # a = np.exp(fit[1])
-        # b = fit[0]
-        # ttg_fitted = a * np.exp(b * x)
-        # ax.plot(x, ttg_fitted, label=type)
-        ax.scatter(x, times, c=[], edgecolor=colors[i], label=type)
+        ax.plot([int(key) for key in data[type]], times, label=type)
         ax.legend()
     ax.set_ylabel("Time to generate (s)")
     ax.set_xlabel("Size of grammar")
     ax.grid()
     fig.tight_layout()
-    plt.savefig("time_compare.png")
+    plt.savefig("time_compare_zoom.png")
     plt.clf()
 
 
@@ -188,11 +172,7 @@ def generate_graphs():
     progress_bar(0, len(result_files) + 2)
     for i, file in enumerate(result_files):
         grammar_type = file.split('_')[0]
-        if grammar_type == "deep" or grammar_type == "recursion":
-            # We noticed that for this grammar, Owl takes exponential time to generate parsers.
-            generate_polynomial_graph(json.load(open(file)), grammar_type)
-        else:
-            generate_linear_graph(json.load(open(file)), grammar_type)
+        generate_linear_graph(json.load(open(file)), grammar_type)
         progress_bar(i + 1, len(result_files) + 2)
     generate_comparative_graphs(result_files)
     progress_bar(1, 1)
@@ -226,7 +206,7 @@ if __name__ == '__main__':
         os.mkdir("tests")
     if not os.path.isdir(os.getcwd() + "/parsers/"):
         os.mkdir("parsers")
-    generate_grammars(TEST_COUNT, step_size=STEP_SIZE)
+    generate_grammars()
     run_generating_tests()
     add_line_counts()
     generate_graphs()

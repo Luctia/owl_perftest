@@ -41,7 +41,7 @@ def recursion(N, filename):
     # Aborted (core dumped)
 
 
-def conditionals(N, filename):
+def optionals(N, filename):
     grammar = open(filename, "w")
     output = get_random_terminal()
     terminals = ""
