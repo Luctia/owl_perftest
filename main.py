@@ -16,7 +16,7 @@ from progress_bar import ProgressBar
 
 TOTAL_MEMORY_GB = 50
 TOTAL_WORKER_COUNT = 6
-TYPES = ["deep", "many", "recursion", "optionals"]
+TYPES = ["long", "many", "optionals", "deep", "recursion"]
 TEST_COUNT = 1000
 STEP_SIZE = 10
 REMOVE_AFTERWARDS = False
@@ -133,7 +133,6 @@ def generate_comparative_graphs(result_files_names):
     lengths = []
     for type in data.keys():
         lengths.append(len(data[type]))
-    # TODO check if lenths are the same
     x = [int(key) for key in data[list(data.keys())[0]]]
     # One graph for line counts
     fig, ax = plt.subplots()
@@ -150,7 +149,6 @@ def generate_comparative_graphs(result_files_names):
     plt.clf()
 
     # Now onto comparing the times
-    colors = ['r', 'g', 'b', 'c', 'm', 'y']
     fig, ax = plt.subplots()
     fig.set_size_inches(10, 5, forward=True)
     for i, type in enumerate(data.keys()):

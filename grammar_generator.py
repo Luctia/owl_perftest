@@ -54,3 +54,12 @@ def optionals(N, filename):
         output = "(terminal" + str(i * 2) + " " + output + ")? terminal" + str(i * 2 + 1)
     grammar.write("if = " + output + "\n" + terminals)
     grammar.close()
+
+
+def long(N, filename):
+    grammar = open(filename, "w")
+    rule = "long = "
+    for _ in range(N):
+        rule += random.choice(TERMINALS) + " "
+    grammar.write(rule)
+    grammar.close()
