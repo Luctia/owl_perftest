@@ -16,7 +16,7 @@ from progress_bar import ProgressBar
 
 TOTAL_MEMORY_GB = 50
 TOTAL_WORKER_COUNT = 6
-TYPES = ["long", "many", "optionals", "deep", "recursion"]
+TYPES = ["long", "many", "optionals", "deep", "nested"]
 TEST_COUNT = 1000
 STEP_SIZE = 10
 REMOVE_AFTERWARDS = False

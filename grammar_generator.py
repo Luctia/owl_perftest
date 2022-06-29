@@ -26,14 +26,14 @@ def deep(N, filename):
     grammar.close()
 
 
-def recursion(N, filename):
+def nested(N, filename):
     grammar = open(filename, "w")
     token_pairs = [["{", "}"], ["(", ")"], ["[", "]"]]
     # First, we write a terminal that could be anything.
-    res = "recurse0 = " + get_random_terminal() + "\n"
+    res = "nested0 = " + get_random_terminal() + "\n"
     for i in range(N):
         token_pair = random.choice(token_pairs)
-        res = "recurse" + str(i + 1) + " = [ '" + token_pair[0] + "' recurse" + str(i) + " '" + token_pair[1] + "' ]\n" + res
+        res = "nested" + str(i + 1) + " = [ '" + token_pair[0] + "' nested" + str(i) + " '" + token_pair[1] + "' ]\n" + res
     grammar.write(res)
     grammar.close()
     # At large N:
